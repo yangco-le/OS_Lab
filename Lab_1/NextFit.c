@@ -1,28 +1,7 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <malloc.h>
-#include <string.h>
-
-// item to record the info of one free memory partition
-struct map {
-    unsigned m_size;
-    char *m_addr;
-    struct map *next, *prior;
-};
-
-// free memory partition list
-struct maplist {
-    struct map *addr;
-    int len;
-};
-
-// initialize a list
-static struct maplist coremap;
-// record loop position
-static struct map *current_loc;
+#include "NextFit.h"
 
 // allocate memory
-char *lmalloc(unsigned size) {
+char *lmalloc(unsigned size, struct maplist coremap, struct map *current_loc) {
     char *a;
     struct map *bp = current_loc;
 
@@ -59,7 +38,7 @@ char *lmalloc(unsigned size) {
 }
 
 // free memory
-void lfree(unsigned size, char* addr) {
+void lfree(unsigned size, char* addr, struct map *current_loc) {
     struct map *bp = current_loc;
 
     // find the next free part
@@ -95,58 +74,15 @@ void lfree(unsigned size, char* addr) {
     }
 }
 
+// display the result
 void display(struct maplist m) {
     printf("Current Status:\n");
     struct map *bp = m.addr;
     for (int i = 0;; i++) {
-        printf("\tItem %d: [Physical Addr: %u; Logical Addr: %u; Size: %u]\n",
+        printf("\tItem %d: [Physical Addr: %lu; Logical Addr: %lu; Size: %u]\n",
                i, bp->m_addr, bp->m_addr - (char*)m.addr, bp->m_size);
         bp = bp->next;
         if(bp == m.addr)
             break;
     }
-}
-
-int main() {
-    // memory for storage
-    char *mem = malloc(1000);
-
-    // initialization
-    coremap.addr = (struct map*)malloc(sizeof(struct map));
-    coremap.addr->m_size = 1000;
-    coremap.addr->m_addr = (char*) coremap.addr;
-    coremap.addr->next = coremap.addr->prior = coremap.addr;
-
-    current_loc = coremap.addr;
-
-    char c;
-    char *str;
-    while(1) {
-        printf("Enter your command: $ ");
-
-        scanf("%s", str);
-
-        if(!strcmp(str, "m") || !strcmp(str, "malloc")) {
-            getchar();
-            int space1;
-            scanf("%d", &space1);
-            char *addr1 = lmalloc(space1);
-            if(addr1) printf("Memory was successfully allocated to address %u.\n", addr1);
-            else printf("The operation failed.\n");
-            display(coremap);
-        } else if (!strcmp(str, "f") || !strcmp(str, "free")) {
-            getchar();
-            int space2;
-            unsigned int addr2;
-            scanf("%d %u", &space2, &addr2);
-            lfree(space2, (char*)addr2);
-            printf("Memory freed successfully.\n");
-            display(coremap);
-        } else {
-            gets(str);
-            printf("Error!\n");
-        }
-
-    }
-    return 0;
 }
