@@ -22,7 +22,7 @@ int main() {
             getchar();
             int space1;
             scanf("%d", &space1);
-            char *addr1 = lmalloc(space1, coremap, current_loc);
+            char *addr1 = lmalloc(space1, &coremap, &current_loc);
             if(addr1) printf("Memory was successfully allocated to address %lu.\n", (unsigned long)(addr1));
             else printf("The operation failed.\n");
             display(coremap, start_addr);
@@ -31,7 +31,7 @@ int main() {
             int space2;
             int addr2; // logical address
             scanf("%d %d", &space2, &addr2);
-            if(lfree(space2, start_addr + addr2, current_loc, coremap))
+            if(lfree(space2, start_addr + addr2, &coremap))
                 printf("Memory freed successfully.\n");
             else printf("Error!\n");
             display(coremap, start_addr);

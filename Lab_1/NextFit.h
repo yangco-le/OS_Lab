@@ -27,10 +27,10 @@ struct maplist {
 };
 
 // allocate memory
-char *lmalloc(unsigned size, struct maplist coremap, struct map *current_loc);
+char *lmalloc(unsigned size, struct maplist *coremap, struct map* *current_loc);
 
 // free memory
-int lfree(unsigned size, char *addr, struct map *current_loc, struct maplist coremap);
+int lfree(unsigned size, char *addr, struct maplist *coremap);
 
 // display the result
 void display(struct maplist m, char *start_addr);

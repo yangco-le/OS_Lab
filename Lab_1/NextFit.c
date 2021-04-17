@@ -1,9 +1,9 @@
 #include "NextFit.h"
 
 // allocate memory
-char *lmalloc(unsigned size, struct maplist coremap, struct map *current_loc) {
+char *lmalloc(unsigned size, struct maplist *coremap, struct map* *current_loc) {
     char *a;
-    struct map *bp = current_loc;
+    struct map *bp = *current_loc;
 
     while(1) {
         if (bp->m_size >= size) {
@@ -13,9 +13,9 @@ char *lmalloc(unsigned size, struct maplist coremap, struct map *current_loc) {
 
             if (bp->m_size == 0) {
                 // the partition is full
-                if (coremap.len == 1) {
+                if (coremap->len == 1) {
                     // only one item in the list
-                    coremap.addr = NULL;
+                    coremap->addr = NULL;
                     struct map *dp = bp;
                     free(dp);
                 } else {
@@ -24,12 +24,13 @@ char *lmalloc(unsigned size, struct maplist coremap, struct map *current_loc) {
                     struct map *dp = bp;
                     free(dp);
                 }
-                coremap.len--;
+                coremap->len--;
             }
+            *current_loc = bp;
             return a;
         }
         bp = bp->next;
-        if(bp == current_loc)
+        if(bp == *current_loc)
             break;
     }
 
@@ -37,15 +38,15 @@ char *lmalloc(unsigned size, struct maplist coremap, struct map *current_loc) {
 }
 
 // free memory
-int lfree(unsigned size, char* addr, struct map *current_loc, struct maplist coremap) {
+int lfree(unsigned size, char* addr, struct maplist *coremap) {
     if(size <= 0) return false;
 
-    struct map *bp = current_loc;
+    struct map *bp = coremap->addr;
 
     // find the next free part
     while (bp->m_addr <= addr) {
         bp = bp->next;
-        if(bp == current_loc)
+        if(bp == coremap->addr)
             break;
     }
 
@@ -60,7 +61,8 @@ int lfree(unsigned size, char* addr, struct map *current_loc, struct maplist cor
         bp->prior->m_size += size + bp->m_size;
         bp->prior->next = bp->next;
         bp->next->prior = bp->prior;
-        if(coremap.addr == bp) coremap.addr =  bp->prior;
+        if(coremap->addr == bp) coremap->addr =  bp->prior;
+        coremap->len--;
         struct map *dp = bp;
         free(dp);
         return true;
@@ -80,6 +82,8 @@ int lfree(unsigned size, char* addr, struct map *current_loc, struct maplist cor
         p->prior = bp->prior;
         bp->prior->next = p;
         bp->prior = p;
+        coremap->len++;
+        if(addr < coremap->addr->m_addr) coremap->addr = p;
         return true;
     }
     return false;
@@ -92,7 +96,7 @@ void display(struct maplist m, char *start_addr) {
     printf("--------------------------------------------------------------------------------\n");
     struct map *bp = m.addr;
     for (int i = 0;; i++) {
-        printf("    Item %d: [Physical Addr: %lu; Logical Addr: %lu; Size: %u]\n",
+            printf("    Item %d: [Physical Addr: %lu; Logical Addr: %lu; Size: %u]\n",
                i, (unsigned long)bp->m_addr, (unsigned long)(bp->m_addr - start_addr), bp->m_size);
         bp = bp->next;
         if(bp == m.addr)
