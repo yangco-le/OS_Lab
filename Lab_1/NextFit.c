@@ -26,7 +26,6 @@ char *lmalloc(unsigned size, struct maplist coremap, struct map *current_loc) {
                 }
                 coremap.len--;
             }
-
             return a;
         }
         bp = bp->next;
@@ -38,7 +37,9 @@ char *lmalloc(unsigned size, struct maplist coremap, struct map *current_loc) {
 }
 
 // free memory
-void lfree(unsigned size, char* addr, struct map *current_loc) {
+int lfree(unsigned size, char* addr, struct map *current_loc, struct maplist coremap) {
+    if(size <= 0) return false;
+
     struct map *bp = current_loc;
 
     // find the next free part
@@ -50,20 +51,28 @@ void lfree(unsigned size, char* addr, struct map *current_loc) {
 
     if (bp->prior->m_addr + bp->prior->m_size == addr && addr + size != bp->m_addr) {
         // case 1
+        // printf("1\n");
         bp->prior->m_size += size;
+        return true;
     } else if (bp->prior->m_addr + bp->prior->m_size == addr && addr + size == bp->m_addr) {
         // case 2
+        // printf("2\n");
         bp->prior->m_size += size + bp->m_size;
         bp->prior->next = bp->next;
         bp->next->prior = bp->prior;
+        if(coremap.addr == bp) coremap.addr =  bp->prior;
         struct map *dp = bp;
         free(dp);
+        return true;
     } else if (bp->prior->m_addr + bp->prior->m_size != addr && addr + size == bp->m_addr) {
         // case 3
+        // printf("3\n");
         bp->m_size += size;
         bp->m_addr -= size;
+        return true;
     } else if (bp->prior->m_addr + bp->prior->m_size != addr && addr + size != bp->m_addr) {
         // case 4
+        // printf("4\n");
         struct map *p = (struct map*)malloc(sizeof(struct map));
         p->m_size = size;
         p->m_addr = addr;
@@ -71,18 +80,23 @@ void lfree(unsigned size, char* addr, struct map *current_loc) {
         p->prior = bp->prior;
         bp->prior->next = p;
         bp->prior = p;
+        return true;
     }
+    return false;
 }
 
 // display the result
-void display(struct maplist m) {
-    printf("Current Status:\n");
+void display(struct maplist m, char *start_addr) {
+    printf("--------------------------------------------------------------------------------\n");
+    printf("\t\tCurrent Status(Start Address: %lu)\n", (unsigned long)start_addr);
+    printf("--------------------------------------------------------------------------------\n");
     struct map *bp = m.addr;
     for (int i = 0;; i++) {
-        printf("\tItem %d: [Physical Addr: %lu; Logical Addr: %lu; Size: %u]\n",
-               i, bp->m_addr, bp->m_addr - (char*)m.addr, bp->m_size);
+        printf("    Item %d: [Physical Addr: %lu; Logical Addr: %lu; Size: %u]\n",
+               i, (unsigned long)bp->m_addr, (unsigned long)(bp->m_addr - start_addr), bp->m_size);
         bp = bp->next;
         if(bp == m.addr)
             break;
     }
+    printf("--------------------------------------------------------------------------------\n\n");
 }

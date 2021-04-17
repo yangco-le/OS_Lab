@@ -10,6 +10,9 @@
 #include <malloc.h>
 #include <string.h>
 
+#define true 1
+#define false 0
+
 // item to record the info of one free memory partition
 struct map {
     unsigned m_size;
@@ -27,9 +30,9 @@ struct maplist {
 char *lmalloc(unsigned size, struct maplist coremap, struct map *current_loc);
 
 // free memory
-void lfree(unsigned size, char* addr, struct map *current_loc);
+int lfree(unsigned size, char *addr, struct map *current_loc, struct maplist coremap);
 
 // display the result
-void display(struct maplist m);
+void display(struct maplist m, char *start_addr);
 
 #endif

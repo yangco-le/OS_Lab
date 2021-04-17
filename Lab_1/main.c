@@ -6,24 +6,18 @@ static struct maplist coremap;
 static struct map *current_loc;
 
 int main() {
-    // memory for storage
-    char *mem = malloc(1000);
 
     // initialization
     coremap.addr = (struct map*)malloc(sizeof(struct map));
     coremap.addr->m_size = 1000;
-    coremap.addr->m_addr = (char*) coremap.addr;
+    coremap.addr->m_addr = (char*) malloc(1000); // malloc 1000 bytes storage
     coremap.addr->next = coremap.addr->prior = coremap.addr;
 
     current_loc = coremap.addr;
+    char *start_addr = coremap.addr->m_addr; // record start address
 
-    char c;
-    char *str;
-    while(1) {
-        printf("Enter your command: $ ");
-
-        scanf("%s", str);
-
+    char str[10];
+    while(scanf("%s", str) != EOF) {
         if(!strcmp(str, "m") || !strcmp(str, "malloc")) {
             getchar();
             int space1;
@@ -31,15 +25,16 @@ int main() {
             char *addr1 = lmalloc(space1, coremap, current_loc);
             if(addr1) printf("Memory was successfully allocated to address %lu.\n", (unsigned long)(addr1));
             else printf("The operation failed.\n");
-            display(coremap);
+            display(coremap, start_addr);
         } else if (!strcmp(str, "f") || !strcmp(str, "free")) {
             getchar();
             int space2;
-            unsigned long addr2;
-            scanf("%d %lu", &space2, &addr2);
-            lfree(space2, (char*)addr2, current_loc);
-            printf("Memory freed successfully.\n");
-            display(coremap);
+            int addr2; // logical address
+            scanf("%d %d", &space2, &addr2);
+            if(lfree(space2, start_addr + addr2, current_loc, coremap))
+                printf("Memory freed successfully.\n");
+            else printf("Error!\n");
+            display(coremap, start_addr);
         } else {
             fgets(str,100,stdin);  // set a limit in case of unlimited input
             printf("Error!\n");
